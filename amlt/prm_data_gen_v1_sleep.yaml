@@ -91,8 +91,8 @@ search:
     # - ls /mnt/conversationhubhot
     # - FORCE_TORCHRUN=1 llamafactory-cli train bash_script/{rank}
     # - torchrun --nproc_per_node=8 --nnodes=2 --node_rank=$$OMPI_COMM_WORLD_RANK --master_addr="$$MASTER_ADDR" --master_port=$$MASTER_PORT src/train.py bash_script/{rank}
-    - sleep infinity
     - bash scripts/{rank}
+    - sleep infinity
     # - torchrun --nproc_per_node=8 src/train.py bash_script/{rank}
     priority: High
     submit_args:
