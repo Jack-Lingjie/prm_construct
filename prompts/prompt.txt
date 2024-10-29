@@ -1,0 +1,138 @@
+我在构建一个对LLM生成COT的中间步骤进行多叉树的构建，具体的我让LLM对于一个问题按照step by step生成，然后通过对step进行分割分为每个节点，在每个节点对树进行分支生成其他的分支结构。树的构造的部分代码如下，请你思考这个代码构造是否存在不足，不过存在不足需要进行代码修改的地方。
+class Node:
+    def __init__(self, qid, idx, x, y, step, parent=None, next_nodes=None):
+        self.qid = qid
+        self.idx = idx
+        self.x = x
+        self.y = y
+        self.step = step
+        self.parent = parent
+        self.next_nodes = next_nodes if next_nodes is not None else [] 
+        self.depth = self.get_depth(y)
+
+    def get_info(self):
+        return {
+            'qid': self.qid,
+            'idx': self.idx,
+            'x': self.x,
+            'y': self.y,
+            'step': self.step,
+            'parent': self.parent,
+            'next_nodes': self.next_nodes
+        }
+
+    def get_depth(self, y: str, target=TARGET) -> int:
+        y_lower = y.lower()
+        target_pos = y_lower.find(target)
+        if target_pos == -1:  
+        # If the target string is not found, return 0  
+            return 0
+        substring = y_lower[:target_pos]
+        count = substring.count(DELIMITER)
+        return count
+
+def get_samples(task, model, input_prompts, previous_step, n_generate_sample):
+    input_prompts = [x for x in input_prompts for _ in range(n_generate_sample)]
+    previous_step_copy = [x for x in previous_step for _ in range(n_generate_sample)]
+    print(f"input_prompts: {input_prompts}")
+    samples, _ = model.get_response(input_prompts) # get result
+    print(f"sample: {samples}")
+    new_ys = []
+    for y_pre, y_new in zip(previous_step_copy, samples):
+        new_ys.append(y_pre + y_new)
+    return new_ys
+
+
+def extract_content_before_ith_delimiter(delimiter, input_string, i): 
+    input_string_lower = input_string.lower()
+    target_pos = input_string_lower.find(TARGET)
+    if target_pos == -1:
+        return ""
+    input_string = input_string[:target_pos]
+
+    # 使用正则表达式查找所有匹配的位置  
+    matches = list(re.finditer(delimiter, input_string))  
+      
+    if len(matches) > i:  
+        # 找到第 i + 1 个 Step 的位置，并返回其之前的内容  
+        return input_string[:matches[i].start()]  
+    elif len(matches) <= 1:  
+        # 如果没有找到第 i 个 Step，返回空
+        return ""
+    # else:
+        # return ""  
+    
+def get_split_prompt(task, nodes, x, step):
+    """get split prompt
+    """
+    # ys = [node.y for node in nodes]
+    delimiter = task.DELIMITER
+    input_prompts = []
+    node_has_sons = []
+    node_completed = []
+    previous_step = []
+    for node in nodes:
+        y = node.y
+        prompt_extrcted = extract_content_before_ith_delimiter(delimiter, y, step)
+        if prompt_extrcted or y == "":
+            # TODO: add prompt warp
+            previous_step.append(prompt_extrcted)
+            prompt_extrcted = task.standard_prompt_wrap(x, prompt_extrcted)
+            input_prompts.append(prompt_extrcted)
+            node_has_sons.append(node)
+        else:  
+            node_completed.append(node)
+    return input_prompts, previous_step, node_has_sons, node_completed
+
+def get_filter_results(nodes, node_has_son, node_completed, new_ys, max_samples, n_generate_sample, step, idx):
+    new_nodes = []
+    for i, node in enumerate(node_has_son):
+        if len(new_nodes) >= max_samples:
+            break
+        new_nodes.append(node)
+        for j in range(n_generate_sample):
+            idx += 1
+            temp_node = Node(qid=node.qid, idx=idx, x=node.x, y=new_ys[i * n_generate_sample + j], step=step, parent=node.idx)
+            node.next_nodes.append(idx)
+            new_nodes.append(temp_node)
+    new_nodes += node_completed
+    if len(nodes == 1):
+        # 排除根节点
+        new_nodes = [node for node in nodes if node.idx != 0]
+    select_new_ys = [node.y for node in new_nodes]
+
+    return new_nodes, select_new_ys, idx    
+    # select_new_ys = ys + new_ys
+    # if len(select_new_ys) > max_samples:
+    #     select_new_ys = select_new_ys[:max_samples]
+    # return select_new_ys
+
+def bsf_solve(args, task, qid, model, to_print=True):
+    # model = task.model
+    idx = 0 
+
+    input_data = task.get_input(qid)  # input
+    x = task.cot_prompt_wrap(input_data)
+    ys = [""]  # current output candidates
+    infos = []
+    node_x = Node(qid=qid, idx=idx, x=x, y="", step=0, parent=-1)
+    nodes = [node_x]
+    for step in range(task.steps):
+        # TODO: add nodes meta information
+        input_prompts, previous_step, node_has_son, node_completed = get_split_prompt(task, nodes, x, step)
+        # get sample y
+        # NOTE y need to append to the input x
+        new_ys = get_samples(task, model, input_prompts, previous_step, args.n_generate_sample)
+        # get new results
+        new_nodes, select_new_ys, idx = get_filter_results(nodes, node_has_son, node_completed, new_ys, args.max_samples, args.n_generate_sample, step, idx)
+
+        ys = select_new_ys
+        nodes = new_nodes
+        
+        if (len(ys) >= args.max_samples):
+            break
+    
+    # if to_print: 
+    #     print(ys)
+    infos = [node.get_info() for node in nodes]
+    return ys, {'tree_path': infos}

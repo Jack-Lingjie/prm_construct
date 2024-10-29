@@ -87,7 +87,7 @@ class PRM:
         # self.data 
         self.full_test_df, self.full_val_df = load_mmlu_pro()
         self.data = self.full_test_df
-        self.steps = 3
+        self.steps = 6
         self.stops = ['\nPassage:\n', None]
         self.DELIMITER = "step"
         # self.depth = self.get_depth()

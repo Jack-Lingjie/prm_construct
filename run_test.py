@@ -8,17 +8,18 @@ from methods.bfs import bsf_solve
 # from tot.models import gpt_usage
 from models.mymodel import Generator
 
+SAVE_PATH = '/mnt/lingjiejiang/textual_aesthetics/prm/data'
 def run(args):
     task = get_task(args.task)
     model = Generator(args.model_name, temperature=args.temperature, max_tokens=args.max_tokens)
     logs, cnt_avg, cnt_any = [], 0, 0
     if args.naive_run:
-        file = f'./tree_path/{args.task}/{args.model_name}_{args.temperature}_naive_{args.prompt_sample}_sample_{args.n_generate_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+        file = f'{SAVE_PATH}/data/{args.task}_tree_path/{args.model_name}_{args.temperature}_naive_{args.prompt_sample}_sample_{args.n_generate_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
     else:
-        file = f'./tree_path/{args.task}/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+        file = f'{SAVE_PATH}/data/{args.task}_tree_path/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
     
 
-    path_file = f'./data/{args.task}/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+    path_file = f'{SAVE_PATH}/data/{args.task}_results/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
     
     os.makedirs(os.path.dirname(file), exist_ok=True)
     os.makedirs(os.path.dirname(path_file), exist_ok=True)
@@ -56,7 +57,7 @@ def parse_args():
     args.add_argument('--model_name', type=str, default="Meta-Llama-3.1-8B-Instruct")
     args.add_argument('--temperature', type=float, default=0.8)
     args.add_argument('--max_tokens', type=int, default=2048)
-    args.add_argument('--max_samples', type=int, default=1000)
+    args.add_argument('--max_samples', type=int, default=200)
 
     args.add_argument('--task', type=str, choices=["prm"], default="prm")
     args.add_argument('--task_start_index', type=int, default=900)

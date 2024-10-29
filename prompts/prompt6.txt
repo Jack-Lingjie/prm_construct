@@ -1,0 +1,99 @@
+我有一个使用LLM获取data的代码如下，其中数据数量可通过下面这个代码获得，总共有12032条，通过设置task_start_index和task_end_index参数可以设置每个任务的起始和终止节点数。
+我现在有多台机器n，每台机器的gpu数量都是8张，帮我写一个python脚本，能够根据机器数n平均的设置n个启动script文件，
+from my_task import get_task
+task = get_task("prm")
+len(task.full_test_df)
+类似下面这种bash script, 可以命名为run_1.sh， run_2.sh ...
+export MODEL_PATH='/dataset/pretrained-models/Qwen2-7B-Instruct'
+export PRED_PATH='./data_pipeline/predictions/qwen2-7b-instruct-temp0.8-top_p0.95_rep2_seed0-alpaca-group'
+export EVAL_PROMPT='qwen2-boxed-step'
+
+CUDA_VISIBLE_DEVICES=0 python eval_math.py --model $MODEL_PATH --remainder 0 --n_groups 8 --save_path $PRED_PATH"0.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1 &
+CUDA_VISIBLE_DEVICES=1 python eval_math.py --model $MODEL_PATH --remainder 1 --n_groups 8 --save_path $PRED_PATH"1.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1 &
+CUDA_VISIBLE_DEVICES=2 python eval_math.py --model $MODEL_PATH --remainder 2 --n_groups 8 --save_path $PRED_PATH"2.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1 &
+CUDA_VISIBLE_DEVICES=3 python eval_math.py --model $MODEL_PATH --remainder 3 --n_groups 8 --save_path $PRED_PATH"3.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1 &
+CUDA_VISIBLE_DEVICES=4 python eval_math.py --model $MODEL_PATH --remainder 4 --n_groups 8 --save_path $PRED_PATH"4.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1 &
+CUDA_VISIBLE_DEVICES=5 python eval_math.py --model $MODEL_PATH --remainder 5 --n_groups 8 --save_path $PRED_PATH"5.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1 &
+CUDA_VISIBLE_DEVICES=6 python eval_math.py --model $MODEL_PATH --remainder 6 --n_groups 8 --save_path $PRED_PATH"6.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1 &
+CUDA_VISIBLE_DEVICES=7 python eval_math.py --model $MODEL_PATH --remainder 7 --n_groups 8 --save_path $PRED_PATH"7.json" --data_file /dataset/industry_gpt/llm_infer/AQuA/train_qa.jsonl --prompt $EVAL_PROMPT --temp 0.8 --top_p 0.95 --rep 2 --seed 0 --tensor_parallel_size 1
+
+
+获取数据代码run_test.py，可以通过python run_test.py运行
+import os
+import json
+import argparse
+
+from my_task import get_task
+# from tot.methods.bfs import solve, naive_solve
+from methods.bfs import bsf_solve
+# from tot.models import gpt_usage
+from models.mymodel import Generator
+
+def run(args):
+    task = get_task(args.task)
+    model = Generator(args.model_name, temperature=args.temperature, max_tokens=args.max_tokens)
+    logs, cnt_avg, cnt_any = [], 0, 0
+    if args.naive_run:
+        file = f'./logs/{args.task}/{args.model_name}_{args.temperature}_naive_{args.prompt_sample}_sample_{args.n_generate_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+    else:
+        file = f'./logs/{args.task}/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+    
+
+    path_file = f'./data/{args.task}/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+    
+    os.makedirs(os.path.dirname(file), exist_ok=True)
+    os.makedirs(os.path.dirname(path_file), exist_ok=True)
+
+    with open(file, 'w') as f:  
+        f.write('')
+
+    with open(path_file, 'w') as f:  
+        f.write('')
+        
+    for i in range(args.task_start_index, args.task_end_index):
+
+        leaf_nodes, info = bsf_solve(args, task, i, model)
+        # res = {"result": ys, "info": info}
+        # logs.append(info)
+        with open(file, 'a') as f:
+            json.dump(info, f, indent=4)
+        
+        with open(path_file, 'a') as f:  
+            for leaf in leaf_nodes:  
+                f.write(json.dumps(leaf) + '\n')
+    
+    n = args.task_end_index - args.task_start_index
+    # print(cnt_avg / n, cnt_any / n)
+    # print('usage_so_far', gpt_usage(args.backend))
+
+
+def parse_args():
+    args = argparse.ArgumentParser()
+    args.add_argument('--backend', type=str, choices=['gpt-4', 'gpt-3.5-turbo'], default='gpt-4')
+    args.add_argument('--model_name', type=str, default="Meta-Llama-3.1-8B-Instruct")
+    args.add_argument('--temperature', type=float, default=0.8)
+    args.add_argument('--max_tokens', type=int, default=2048)
+    args.add_argument('--max_samples', type=int, default=1000)
+
+    args.add_argument('--task', type=str, choices=["prm"], default="prm")
+    args.add_argument('--task_start_index', type=int, default=900)
+    args.add_argument('--task_end_index', type=int, default=901)
+
+    args.add_argument('--naive_run', action='store_true')
+    args.add_argument('--prompt_sample', type=str, choices=['standard', 'cot'])  # only used when method_generate = sample, or naive_run
+
+    args.add_argument('--method_generate', type=str, choices=['sample', 'propose'])
+    args.add_argument('--method_evaluate', type=str, choices=['match', 'model'], default="match")
+    args.add_argument('--method_select', type=str, choices=['sample', 'greedy'], default='greedy')
+    args.add_argument('--n_generate_sample', type=int, default=3)  # only thing needed if naive_run
+    args.add_argument('--n_evaluate_sample', type=int, default=1)
+    args.add_argument('--n_select_sample', type=int, default=1)
+
+    args = args.parse_args()
+    return args
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    print(args)
+    run(args)

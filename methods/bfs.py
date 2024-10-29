@@ -10,7 +10,7 @@ def extract_answer(text):
     if match:  
         return match.group("answer")  
     else:  
-        print("1st answer extract failed\n" + text)  
+        # print("1st answer extract failed\n" + text)  
         return extract_again(text)  
   
 def extract_again(text):  
@@ -141,7 +141,7 @@ def get_split_prompt(task, nodes, x, step):
         prompt_extrcted = extract_content_before_ith_delimiter(delimiter, y, step)
         if prompt_extrcted or y == "":
             # TODO: add prompt warp
-            print(f"prompt_extrcted: {prompt_extrcted}")
+            # print(f"prompt_extrcted: {prompt_extrcted}")
             previous_step.append(prompt_extrcted)
             prompt_extrcted = task.prompt_concat(x, prompt_extrcted)
             input_prompts.append(prompt_extrcted)

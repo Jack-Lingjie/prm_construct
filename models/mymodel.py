@@ -32,6 +32,7 @@ class Generator:
             print("use original template")
 
         self.sampling_params = SamplingParams(**gen_kwargs_vllm)
+        print(f"sampling_params：{self.sampling_params}")
         pass
     
     def get_input_wrap(self, question_prompt) -> str:
@@ -45,7 +46,7 @@ class Generator:
             add_special_tokens=False,
         )  
         input_ids = encoded_inputs['input_ids']  
-        print(f"sampling_params：{self.sampling_params}")
+        # print(f"sampling_params：{self.sampling_params}")
         outputs = self.llm.generate(prompt_token_ids=input_ids, sampling_params=self.sampling_params)
         outputs_text = [x.outputs[0].text for x in outputs]
         return outputs_text, outputs
@@ -66,7 +67,7 @@ class Generator:
             add_special_tokens=False,
         ) 
         input_ids = encoded_inputs['input_ids']  
-        print(f"sampling_params：{self.sampling_params}")
+        # print(f"sampling_params：{self.sampling_params}")
         outputs = self.llm.generate(prompt_token_ids=input_ids, sampling_params=self.sampling_params)
         outputs_text = [x.outputs[0].text for x in outputs]
         return outputs_text, outputs
