@@ -31,7 +31,7 @@ def extract_final(text):
         return None
     
 class Node:
-    def __init__(self, qid, idx, x, y, step, parent=None, next_nodes=None, gt_answer=None):
+    def __init__(self, qid, idx, x, y, step, parent=None, next_nodes=None, gt_answer=None, category=None):
         self.qid = qid
         self.idx = idx
         self.x = x
@@ -47,6 +47,7 @@ class Node:
         self.label_se = 0
         self.he_list = []  
         self.se_list = [] 
+        self.category = category
         # self.depth = self.get_depth(y)
 
     def get_info(self):
@@ -65,7 +66,8 @@ class Node:
             "pred_acc": self.pred_acc,
             "pred": self.pred,
             "he_list": self.he_list,  
-            "se_list": self.se_list
+            "se_list": self.se_list,
+            "category": self.category
         }
     
     def get_acc(self):
@@ -158,7 +160,7 @@ def get_filter_results(nodes, node_has_son, node_completed, new_ys, max_samples,
         # new_nodes.append(node)
         for j in range(n_generate_sample):
             idx += 1
-            temp_node = Node(qid=node.qid, idx=idx, x=node.x, y=new_ys[i * n_generate_sample + j], step=step, parent=node.idx, gt_answer=gt_answer)
+            temp_node = Node(qid=node.qid, idx=idx, x=node.x, y=new_ys[i * n_generate_sample + j], step=step, parent=node.idx, gt_answer=gt_answer, category=node.category)
             node.next_nodes.append(idx)
             new_nodes.append(temp_node)
     # new_nodes += node_completed
@@ -225,7 +227,8 @@ def dfs_collect_stats(node, all_nodes, he_path, se_path, leaf_nodes):
         # 将叶节点信息添加到 leaf_nodes 列表中  
         leaf_info = {  
             'qid': node.qid,  
-            'idx': node.idx,  
+            'idx': node.idx, 
+            "category": node.category,
             'step': node.step,  
             'question': node.x,  
             'answer': node.y,  
@@ -259,7 +262,9 @@ def bsf_solve(args, task, qid, model, to_print=True):
     x, raw_prompt= task.cot_prompt_wrap(input_data, model, k=0)
     ys = [""]  # current output candidates
     infos = []
-    node_x = Node(qid=qid, idx=idx, x=raw_prompt, y="", step=0, parent=-1)
+    question_id = input_data["question_id"]
+    category = input_data["category"]
+    node_x = Node(qid=question_id, idx=idx, x=raw_prompt, y="", step=0, parent=-1, category=category)
     nodes = [node_x]
     all_nodes = [node_x]
     for step in range(task.steps):
