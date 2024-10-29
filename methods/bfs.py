@@ -1,5 +1,5 @@
 import re
-
+import json
 DELIMITER = "step"
 TARGET = "the answer is"
 
@@ -199,15 +199,15 @@ def process_tree(all_nodes):
     root = all_nodes[0]  
     count_leaves_and_true_leaves(root, all_nodes)
 
-def dfs_collect_stats(node, all_nodes, he_path, se_path):  
+def dfs_collect_stats(node, all_nodes, he_path, se_path, leaf_nodes):  
     if node.step > 0:  
         he_path.append(node.label_he)  
         se_path.append(node.label_se)  
-      
+  
     if not node.next_nodes:  # 如果是叶节点  
-        node.he_list = he_path.copy()  # 将路径上的 he_list 存储在叶节点中  
-        node.se_list = se_path.copy()  # 将路径上的 se_list 存储在叶节点中  
-
+        node.he_list = he_path.copy()  
+        node.se_list = se_path.copy()  
+          
         # 使用正则表达式查找所有匹配的位置  
         step_pattern = re.compile(re.escape(DELIMITER), re.IGNORECASE)  
         matches = list(step_pattern.finditer(node.y))  
@@ -221,16 +221,32 @@ def dfs_collect_stats(node, all_nodes, he_path, se_path):
         if len(node.se_list) < num_steps:  
             last_se = node.se_list[-1] if node.se_list else 0  
             node.se_list.extend([last_se] * (num_steps - len(node.se_list)))  
-          
+  
+        # 将叶节点信息添加到 leaf_nodes 列表中  
+        leaf_info = {  
+            'qid': node.qid,  
+            'idx': node.idx,  
+            'step': node.step,  
+            'question': node.x,  
+            'answer': node.y,  
+            'hard_estimation': node.he_list,  
+            'soft_estimation': node.se_list,
+            "gt_answer": node.gt_answer,
+            "pred": node.pred 
+        }  
+        leaf_nodes.append(leaf_info)  
+  
         return  
-      
+  
     for next_node_idx in node.next_nodes:  
         next_node = all_nodes[next_node_idx]  
-        dfs_collect_stats(next_node, all_nodes, he_path.copy(), se_path.copy())  
+        dfs_collect_stats(next_node, all_nodes, he_path.copy(), se_path.copy(), leaf_nodes)  
   
 def collect_stats_from_root(all_nodes):  
-    root = all_nodes[0]  # 假设根节点是第一个节点  
-    dfs_collect_stats(root, all_nodes, [], [])  
+    leaf_nodes = []  
+    root = all_nodes[0]  
+    dfs_collect_stats(root, all_nodes, [], [], leaf_nodes)  
+    return leaf_nodes 
 
 def bsf_solve(args, task, qid, model, to_print=True):
     # model = task.model
@@ -280,12 +296,20 @@ def bsf_solve(args, task, qid, model, to_print=True):
     import time
     start_time = time.time()  
     process_tree(all_nodes)
-    end_time = time.time()  
+
   
     # 计算运行时间  
-    execution_time = end_time - start_time  
 
-    collect_stats_from_root(all_nodes)
+
+    leaf_nodes = collect_stats_from_root(all_nodes)  
+  
+    # 将 leaf_nodes 写入 result.jsonl 文件中  
+    with open('data/result.jsonl', 'w') as f:  
+        for leaf in leaf_nodes:  
+            f.write(json.dumps(leaf) + '\n')
+
+    end_time = time.time()  
+    execution_time = end_time - start_time  
     print(f"process_tree 函数的运行时间: {execution_time} 秒") 
 
     infos = [node.get_info() for node in all_nodes]
