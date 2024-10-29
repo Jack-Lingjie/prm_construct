@@ -109,5 +109,5 @@ search:
       # values: ['ta_chosen_llama3.1_instruct_dpo_2048_default_template_job.yaml', 'ta_chosen_tuluv2_dpo_2048_default_template_job.yaml', 'ta_rejected_llama3.1_instruct_dpo_2048_default_template_job.yaml', 'ta_rejected_tuluv2_dpo_2048_default_template_job.yaml']
       # values: ['ta_rejected_tuluv2_dpo_2048_default_template_job.yaml', 'ta_rejected_tuluv2_dpo_2048_default_template_v2_job.yaml', 'ta_rejected_tuluv2_dpo_2048_default_template_v3_job.yaml']
       # values: ['glanchatv2_full_sft_2048_default_template_job_lr5e6_e3.yaml', 'glanv2_full_sft_2048_default_template_job_lr5e6_e3.yaml', 'glanv2_glanchatv2_full_sft_2048_default_template_job_lr5e6_e3.yaml']
-      values: ['run_1.sh', "run_2.sh", "run_3.sh", "run_4.sh", "run_5.sh", "run_6.sh"]
+      values: ['run_1.sh']
 
