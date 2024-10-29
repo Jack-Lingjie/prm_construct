@@ -68,8 +68,8 @@ storage:
 
 search:
   job_template:
-    name: full_finetune
-    sku: 8x40G8-A100-IB-NvLink
+    name: infer_parrallel
+    sku: 1x40G8
     # sku: 2x40G8-A100-IB-NvLink
     identity: managed
     mpi: True
