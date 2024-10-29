@@ -1,6 +1,6 @@
 import re
 
-DELIMITER = "."
+DELIMITER = "step"
 TARGET = "the answer is"
 
 def extract_answer(text):  
@@ -207,6 +207,21 @@ def dfs_collect_stats(node, all_nodes, he_path, se_path):
     if not node.next_nodes:  # 如果是叶节点  
         node.he_list = he_path.copy()  # 将路径上的 he_list 存储在叶节点中  
         node.se_list = se_path.copy()  # 将路径上的 se_list 存储在叶节点中  
+
+        # 使用正则表达式查找所有匹配的位置  
+        step_pattern = re.compile(re.escape(DELIMITER), re.IGNORECASE)  
+        matches = list(step_pattern.finditer(node.y))  
+        num_steps = len(matches)  
+          
+        # 补齐 he_list 和 se_list  
+        if len(node.he_list) < num_steps:  
+            last_he = node.he_list[-1] if node.he_list else 0  
+            node.he_list.extend([last_he] * (num_steps - len(node.he_list)))  
+              
+        if len(node.se_list) < num_steps:  
+            last_se = node.se_list[-1] if node.se_list else 0  
+            node.se_list.extend([last_se] * (num_steps - len(node.se_list)))  
+          
         return  
       
     for next_node_idx in node.next_nodes:  
