@@ -1,68 +1,37 @@
-# import itertools
-# import numpy as np
-# from functools import partial
-# from tot.models import gpt
-# from models.mymodel import Generator
 import re
-
-# import logging  
-  
-# 配置日志  
-# logging.basicConfig(  
-#     filename='tree_construction.log',  # 日志文件名  
-#     filemode='w',  # 写模式
-#     level=print,  # 设置日志级别  
-#     format='%(asctime)s - %(levelname)s - %(message)s'  # 日志格式  
-# )  
 
 DELIMITER = "."
 TARGET = "the answer is"
 
-# def get_value(task, x, y, n_evaluate_sample, cache_value=True):
-#     value_prompt = task.value_prompt_wrap(x, y)
-#     if cache_value and value_prompt in task.value_cache:
-#         return task.value_cache[value_prompt]
-#     value_outputs = gpt(value_prompt, n=n_evaluate_sample, stop=None)
-#     value = task.value_outputs_unwrap(x, y, value_outputs)
-#     if cache_value:
-#         task.value_cache[value_prompt] = value
-#     return value
+def extract_answer(text):  
+    # Pattern to match different formats of "The answer is: C"  
+    pattern = r"answer is[:\s]*\(?(?P<answer>[A-J])\)?"  
+    match = re.search(pattern, text, re.IGNORECASE)  
+    if match:  
+        return match.group("answer")  
+    else:  
+        print("1st answer extract failed\n" + text)  
+        return extract_again(text)  
+  
+def extract_again(text):  
+    # Pattern to match formats like "Answer: C"  
+    pattern = r'.*[aA]nswer[:\s]*([A-J])'  
+    match = re.search(pattern, text)  
+    if match:  
+        return match.group(1)  
+    else:  
+        return extract_final(text)  
 
-# def get_values(task, x, ys, n_evaluate_sample, cache_value=True):
-#     values = []
-#     local_value_cache = {}
-#     for y in ys:  # each partial output
-#         if y in local_value_cache:  # avoid duplicate candidates
-#             value = 0
-#         else:    
-#             value = get_value(task, x, y, n_evaluate_sample, cache_value=cache_value)
-#             local_value_cache[y] = value
-#         values.append(value)
-#     return values
-
-# def get_votes(task, x, ys, n_evaluate_sample):
-#     vote_prompt = task.vote_prompt_wrap(x, ys)
-#     vote_outputs = gpt(vote_prompt, n=n_evaluate_sample, stop=None)
-#     values = task.vote_outputs_unwrap(vote_outputs, len(ys))
-#     return values
-
-# def get_proposals(task, x, y): 
-#     propose_prompt = task.propose_prompt_wrap(x, y)
-#     proposals = gpt(propose_prompt, n=1, stop=None)[0].split('\n')
-#     return [y + _ + '\n' for _ in proposals]
-
-# def get_samples(task, x, y, n_generate_sample, prompt_sample, stop):
-#     if prompt_sample == 'standard':
-#         prompt = task.standard_prompt_wrap(x, y)
-#     elif prompt_sample == 'cot':
-#         prompt = task.cot_prompt_wrap(x, y)
-#     else:
-#         raise ValueError(f'prompt_sample {prompt_sample} not recognized')
-#     samples = gpt(prompt, n=n_generate_sample, stop=stop)
-#     return [y + _ for _ in samples]
-
+def extract_final(text):
+    pattern = r"\b[A-J]\b(?!.*\b[A-J]\b)"
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        return match.group(0)
+    else:
+        return None
+    
 class Node:
-    def __init__(self, qid, idx, x, y, step, parent=None, next_nodes=None):
+    def __init__(self, qid, idx, x, y, step, parent=None, next_nodes=None, gt_answer=None):
         self.qid = qid
         self.idx = idx
         self.x = x
@@ -70,6 +39,14 @@ class Node:
         self.step = step
         self.parent = parent
         self.next_nodes = next_nodes if next_nodes is not None else [] 
+        self.gt_answer = gt_answer
+        self.pred_acc = self.get_acc()
+        self.is_leaf = False
+        self.is_right = False
+        self.label_he = 0
+        self.label_se = 0
+        self.he_list = []  
+        self.se_list = [] 
         # self.depth = self.get_depth(y)
 
     def get_info(self):
@@ -80,18 +57,37 @@ class Node:
             'y': self.y,
             'step': self.step,
             'parent': self.parent,
-            'next_nodes': self.next_nodes
+            'next_nodes': self.next_nodes,
+            'pred_acc': self.pred_acc,
+            "label_he": self.label_he,
+            "label_se": self.label_se,
+            "gt_answer": self.gt_answer,
+            "pred_acc": self.pred_acc,
+            "pred": self.pred,
+            "he_list": self.he_list,  
+            "se_list": self.se_list
         }
-
-    # def get_depth(self, y: str, target=TARGET) -> int:
-    #     y_lower = y.lower()
-    #     target_pos = y_lower.find(target)
-    #     if target_pos == -1:  
-    #     # If the target string is not found, return 0  
-    #         return 0
-    #     substring = y_lower[:target_pos]
-    #     count = substring.count(DELIMITER)
-    #     return count
+    
+    def get_acc(self):
+        pred = extract_answer(self.y)
+        self.pred = pred
+        # print(f"pred: {pred}")
+        # print(f"self.pred: {self.pred}")
+        # print(f"self.gt_answer: {self.gt_answer}")
+        if pred == self.gt_answer:
+            return True
+        else:
+            return False
+        
+    def get_is_leaf(self):
+        return False
+    
+    def get_is_right(self, delimiter="step"):
+        step_pattern = re.compile(re.escape(delimiter), re.IGNORECASE)  
+        matches = list(step_pattern.finditer(self.y))  
+        if len(matches) == self.step and self.step > 0:  
+            return True
+        return False
 
 def get_samples(task, model, input_prompts, previous_step, n_generate_sample):
     print(f"input_prompts length: {len(input_prompts)}")
@@ -100,7 +96,7 @@ def get_samples(task, model, input_prompts, previous_step, n_generate_sample):
     print(f"input_prompts_copy length: {len(input_prompts)}")
     print(f"input_prompts: {input_prompts}")
 
-    samples, original_output = model.get_response(input_prompts) # get result
+    samples, original_output = model.get_next_response(input_prompts) # get results
     # print(f"sample: {samples}")
     new_ys = []
     for y_pre, y_new in zip(previous_step_copy, samples):
@@ -120,11 +116,11 @@ def extract_content_before_ith_delimiter(delimiter, input_string, i):
     input_string = input_string[:target_pos]
 
     # 使用正则表达式查找所有匹配的位置  
-    matches = list(re.finditer(re.escape(delimiter), input_string))  
-      
-    if len(matches) >= i:  
+    step_pattern = re.compile(re.escape(delimiter), re.IGNORECASE)  
+    matches = list(step_pattern.finditer(input_string))  
+    if len(matches) > i:  
         # 找到第 i + 1 个 Step 的位置，并返回其之前的内容  
-        return input_string[:matches[i - 1].end()] 
+        return input_string[:matches[i].start()] 
     elif len(matches) <= 1:  
         # 如果没有找到第 i 个 Step，返回空
         return ""
@@ -147,28 +143,28 @@ def get_split_prompt(task, nodes, x, step):
             # TODO: add prompt warp
             print(f"prompt_extrcted: {prompt_extrcted}")
             previous_step.append(prompt_extrcted)
-            prompt_extrcted = task.standard_prompt_wrap(x, prompt_extrcted)
+            prompt_extrcted = task.prompt_concat(x, prompt_extrcted)
             input_prompts.append(prompt_extrcted)
             node_has_sons.append(node)
         else:  
             node_completed.append(node)
     return input_prompts, previous_step, node_has_sons, node_completed
 
-def get_filter_results(nodes, node_has_son, node_completed, new_ys, max_samples, n_generate_sample, step, idx):
+def get_filter_results(nodes, node_has_son, node_completed, new_ys, max_samples, n_generate_sample, step, idx, gt_answer):
     new_nodes = []
     for i, node in enumerate(node_has_son):
         if len(new_nodes) >= max_samples:
             break
-        new_nodes.append(node)
+        # new_nodes.append(node)
         for j in range(n_generate_sample):
             idx += 1
-            temp_node = Node(qid=node.qid, idx=idx, x=node.x, y=new_ys[i * n_generate_sample + j], step=step, parent=node.idx)
+            temp_node = Node(qid=node.qid, idx=idx, x=node.x, y=new_ys[i * n_generate_sample + j], step=step, parent=node.idx, gt_answer=gt_answer)
             node.next_nodes.append(idx)
             new_nodes.append(temp_node)
-    new_nodes += node_completed
-    if len(nodes) == 1:
-        # 排除根节点
-        new_nodes = [node for node in new_nodes if node.idx != 0]
+    # new_nodes += node_completed
+    # if len(nodes) == 1:
+    #     # 排除根节点
+    #     new_nodes = [node for node in new_nodes if node.idx != 0]
     select_new_ys = [node.y for node in new_nodes]
 
     return new_nodes, select_new_ys, idx    
@@ -176,23 +172,72 @@ def get_filter_results(nodes, node_has_son, node_completed, new_ys, max_samples,
     # if len(select_new_ys) > max_samples:
     #     select_new_ys = select_new_ys[:max_samples]
     # return select_new_ys
+def count_leaves_and_true_leaves(node, all_nodes):  
+    if not node.next_nodes:  
+        # 当前节点是叶节点  
+        node.is_leaf = True  
+        node.label_he = 1 if node.pred_acc else 0  
+        node.label_se = 1 if node.pred_acc else 0  
+        return 1, 1 if node.pred_acc else 0    
+  
+    total_leaves = 0  
+    true_leaves = 0  
+    for next_node_idx in node.next_nodes:  
+        next_node = all_nodes[next_node_idx]  
+        leaves, true_leaves_count = count_leaves_and_true_leaves(next_node, all_nodes)  
+        total_leaves += leaves  
+        true_leaves += true_leaves_count  
+  
+    # 设置当前节点的 label_he 和 label_se  
+    node.label_he = 1 if true_leaves > 0 else 0  
+    node.label_se = true_leaves / total_leaves if total_leaves > 0 else 0  
+  
+    return total_leaves, true_leaves  
+  
+  
+def process_tree(all_nodes):  
+    root = all_nodes[0]  
+    count_leaves_and_true_leaves(root, all_nodes)
+
+def dfs_collect_stats(node, all_nodes, he_path, se_path):  
+    if node.step > 0:  
+        he_path.append(node.label_he)  
+        se_path.append(node.label_se)  
+      
+    if not node.next_nodes:  # 如果是叶节点  
+        node.he_list = he_path.copy()  # 将路径上的 he_list 存储在叶节点中  
+        node.se_list = se_path.copy()  # 将路径上的 se_list 存储在叶节点中  
+        return  
+      
+    for next_node_idx in node.next_nodes:  
+        next_node = all_nodes[next_node_idx]  
+        dfs_collect_stats(next_node, all_nodes, he_path.copy(), se_path.copy())  
+  
+def collect_stats_from_root(all_nodes):  
+    root = all_nodes[0]  # 假设根节点是第一个节点  
+    dfs_collect_stats(root, all_nodes, [], [])  
 
 def bsf_solve(args, task, qid, model, to_print=True):
     # model = task.model
     idx = 0 
-
+    cnt = 0
     input_data = task.get_input(qid)  # input
-    x = task.cot_prompt_wrap(input_data)
+    gt_answer = input_data["answer"]
+    # x = task.cot_prompt_wrap(input_data)
+    # x = model.get_input_wrap(x)
+    x, raw_prompt= task.cot_prompt_wrap(input_data, model, k=0)
     ys = [""]  # current output candidates
     infos = []
-    node_x = Node(qid=qid, idx=idx, x=x, y="", step=0, parent=-1)
+    node_x = Node(qid=qid, idx=idx, x=raw_prompt, y="", step=0, parent=-1)
     nodes = [node_x]
+    all_nodes = [node_x]
     for step in range(task.steps):
         # TODO: add nodes meta information
         print(f"node numbers: {len(nodes)}")
         node_idxs = [node.idx for node in nodes]
         print(f"node idxs: {str(node_idxs)}")
         input_prompts, previous_step, node_has_son, node_completed = get_split_prompt(task, nodes, x, step)
+        cnt += len(node_completed)
         node_has_son_y = [node.y for node in node_has_son]
         node_has_son_idx = [node.idx for node in node_has_son]
         node_completed_y = [node.y for node in node_completed]
@@ -207,64 +252,26 @@ def bsf_solve(args, task, qid, model, to_print=True):
         # NOTE y need to append to the input x
         new_ys = get_samples(task, model, input_prompts, previous_step, args.n_generate_sample)
         # get new results
-        new_nodes, select_new_ys, idx = get_filter_results(nodes, node_has_son, node_completed, new_ys, args.max_samples, args.n_generate_sample, step, idx)
-
+        new_nodes, select_new_ys, idx = get_filter_results(nodes, node_has_son, node_completed, new_ys, args.max_samples, args.n_generate_sample, step + 1, idx, gt_answer)
+        
         ys = select_new_ys
         nodes = new_nodes
-        
+        all_nodes += nodes # parent nodes
+        if cnt >= args.max_samples:
+            break
         if (len(ys) >= args.max_samples):
             break
     
-    # if to_print: 
-    #     print(ys)
-    infos = [node.get_info() for node in nodes]
+    import time
+    start_time = time.time()  
+    process_tree(all_nodes)
+    end_time = time.time()  
+  
+    # 计算运行时间  
+    execution_time = end_time - start_time  
+
+    collect_stats_from_root(all_nodes)
+    print(f"process_tree 函数的运行时间: {execution_time} 秒") 
+
+    infos = [node.get_info() for node in all_nodes]
     return ys, {'tree_path': infos}
-
-# def solve(args, task, idx, to_print=True):
-#     global gpt
-#     gpt = partial(gpt, model=args.backend, temperature=args.temperature)
-#     print(gpt)
-#     x = task.get_input(idx)  # input
-#     ys = ['']  # current output candidates
-#     infos = []
-#     for step in range(task.steps):
-#         # generation
-#         if args.method_generate == 'sample':
-#             new_ys = [get_samples(task, x, y, args.n_generate_sample, prompt_sample=args.prompt_sample, stop=task.stops[step]) for y in ys]
-#         elif args.method_generate == 'propose':
-#             new_ys = [get_proposals(task, x, y) for y in ys]
-#         new_ys = list(itertools.chain(*new_ys))
-#         ids = list(range(len(new_ys)))
-#         # evaluation
-#         if args.method_evaluate == 'vote':
-#             values = get_votes(task, x, new_ys, args.n_evaluate_sample)
-#         elif args.method_evaluate == 'value':
-#             values = get_values(task, x, new_ys, args.n_evaluate_sample)
-
-#         # selection
-#         if args.method_select == 'sample':
-#             ps = np.array(values) / sum(values)
-#             select_ids = np.random.choice(ids, size=args.n_select_sample, p=ps).tolist()
-#         elif args.method_select == 'greedy':
-#             select_ids = sorted(ids, key=lambda x: values[x], reverse=True)[:args.n_select_sample]
-#         select_new_ys = [new_ys[select_id] for select_id in select_ids]
-
-#         # log
-#         if to_print: 
-#             sorted_new_ys, sorted_values = zip(*sorted(zip(new_ys, values), key=lambda x: x[1], reverse=True))
-#             print(f'-- new_ys --: {sorted_new_ys}\n-- sol values --: {sorted_values}\n-- choices --: {select_new_ys}\n')
-        
-#         infos.append({'step': step, 'x': x, 'ys': ys, 'new_ys': new_ys, 'values': values, 'select_new_ys': select_new_ys})
-#         ys = select_new_ys
-    
-#     if to_print: 
-#         print(ys)
-#     return ys, {'steps': infos}
-
-# def naive_solve(args, task, idx, to_print=True):
-#     global gpt
-#     gpt = partial(gpt, model=args.backend, temperature=args.temperature)
-#     print(gpt)
-#     x = task.get_input(idx)  # input
-#     ys = get_samples(task, x, '', args.n_generate_sample, args.prompt_sample, stop=None)
-#     return ys, {}
