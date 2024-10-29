@@ -76,6 +76,7 @@ search:
     process_count_per_node: 1
     command:
     - pip install -r requirements.txt
+    - pip install vllm==0.5.4
     # - pip install deepspeed==0.14.4
     - echo $${rank}
     # - bash amlt_job/sas_mount.sh
@@ -90,8 +91,8 @@ search:
     # - ls /mnt/conversationhubhot
     # - FORCE_TORCHRUN=1 llamafactory-cli train bash_script/{rank}
     # - torchrun --nproc_per_node=8 --nnodes=2 --node_rank=$$OMPI_COMM_WORLD_RANK --master_addr="$$MASTER_ADDR" --master_port=$$MASTER_PORT src/train.py bash_script/{rank}
-    - sleep infinity
     - bash scripts/{rank}
+    - sleep infinity
     # - torchrun --nproc_per_node=8 src/train.py bash_script/{rank}
     priority: High
     submit_args:

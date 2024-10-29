@@ -76,6 +76,7 @@ search:
     process_count_per_node: 1
     command:
     - pip install -r requirements.txt
+    - pip install vllm==0.5.4
     # - pip install deepspeed==0.14.4
     - echo $${rank}
     # - bash amlt_job/sas_mount.sh
