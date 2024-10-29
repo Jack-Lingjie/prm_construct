@@ -1,0 +1,33 @@
+参考下面这个格式，给出下面这个question的answer
+Question:
+If Buzz bought a pizza with 78 slices at a restaurant and then decided to share it with the waiter in the ratio of 5:8, with Buzz's ratio being 5, what's twenty less the number of slices of pizza that the waiter ate? 
+Step 1: The total ratio representing the pizza is 5+8 = <<5+8=13>>13. Step 2: The waiter ate 13 x 8 / 13 = <<13*8/13=6>>6 slices of the pizza. Step 3: Buzz ate 78 - 6 = <<78-6=72>>72 slices of the pizza. Step 4: The waiter ate 20 less than the number of slices that Buzz ate which is 72 - 20 = 52. Step 5: The waiter ate 52 slices of the pizza. The answer is: 52
+The following are multiple choice questions (with answers) about law. Think step by step and then finish your answer with "the answer is (X)" where X is the correct letter choice.
+Question:
+What is the judge ad hoc?
+Options:
+A. Judge ad hoc is the president of the ICJ
+B. Judge ad hoc is a temporary judge appointed for a specific period of time
+C. Judge ad hoc is the judge that each party will always nominate in every contentious case
+D. Judge ad hoc is the member of the bench of the ICJ with a casting vote
+E. Judge ad hoc is a judge who is nominated by the parties involved in a contentious case, irrespective of their nationality
+F. Judge ad hoc is a judge who decides on the admissibility of cases before the ICJ
+G. Judge ad hoc is a judge appointed by the Security Council of the United Nations
+H. Judge ad hoc is a surrogate judge, in case a judge is disqualified or passes away
+I. If a party to a contentious case before the ICJ does not have a national sitting as judge, it is entitled to nominate someone as a judge solely for that case, with the title of judge ad hoc
+Answer: Let's think step by step. 
+Step 1: A judge ad hoc is appointed for specific cases, particularly when a party involved in a case before the ICJ does not have a national judge on the bench.
+Step 2: If a party to a contentious case before the ICJ does not have a national sitting as judge, it is entitled to nominate someone as a judge solely for that case, with the title of judge ad hoc.
+The answer is: I
+
+Question:
+If Buzz bought a pizza with 78 slices at a restaurant and then decided to share it with the waiter in the ratio of 5:8, with Buzz's ratio being 5, what's twenty less the number of slices of pizza that the waiter ate? 
+Step 1: The total ratio representing the pizza is 5+8 = <<5+8=13>>13. Step 2: The waiter ate 13 x 8 / 13 = <<13*8/13=6>>6 slices of the pizza. Step 3: Buzz ate 78 - 6 = <<78-6=72>>72 slices of the pizza. Step 4: The waiter ate 20 less than the number of slices that Buzz ate which is 72 - 20 = 52. Step 5: The waiter ate 52 slices of the pizza. The answer is: 52
+Question:
+A grocery store purchased a large mirror to hang on a wall in the store. Along with the mirror itself, the manufacturer provided brackets and bolts to be used for hanging the mirror. The grocery store paid a local carpenter to come in and hang the mirror. A few days after the carpenter installed the mirror, the mirror suddenly fell from the wall because of a defect in the brackets. It struck a shopper on the head, causing serious injuries to him. If the shopper asserts a claim against the carpenter based on strict liability in tort, the plaintiff will
+Options:
+A. prevail, because the brackets were defective when installed.
+B. prevail, because it would be abnormally dangerous to maintain such a large mirror on the wall of a retail outlet.
+C. not prevail, because the carpenter was not engaged in the sale of the mirror.
+D. not prevail, because the carpenter had no relationship of privily with the plaintiff.
+Answer: Let's think step by step.

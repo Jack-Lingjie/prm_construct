@@ -82,7 +82,7 @@ class Node:
     def get_is_leaf(self):
         return False
     
-    def get_is_right(self, delimiter="step"):
+    def get_is_right(self, delimiter=DELIMITER):
         step_pattern = re.compile(re.escape(delimiter), re.IGNORECASE)  
         matches = list(step_pattern.finditer(self.y))  
         if len(matches) == self.step and self.step > 0:  
@@ -90,19 +90,19 @@ class Node:
         return False
 
 def get_samples(task, model, input_prompts, previous_step, n_generate_sample):
-    print(f"input_prompts length: {len(input_prompts)}")
+    # print(f"input_prompts length: {len(input_prompts)}")
     input_prompts = [x for x in input_prompts for _ in range(n_generate_sample)]
     previous_step_copy = [x for x in previous_step for _ in range(n_generate_sample)]
-    print(f"input_prompts_copy length: {len(input_prompts)}")
-    print(f"input_prompts: {input_prompts}")
+    # print(f"input_prompts_copy length: {len(input_prompts)}")
+    # print(f"input_prompts: {input_prompts}")
 
     samples, original_output = model.get_next_response(input_prompts) # get results
     # print(f"sample: {samples}")
     new_ys = []
     for y_pre, y_new in zip(previous_step_copy, samples):
         new_ys.append(y_pre + y_new)
-    print(f"len new_ys: {len(new_ys)}")
-    print(f"new_ys: {new_ys}")
+    # print(f"len new_ys: {len(new_ys)}")
+    # print(f"new_ys: {new_ys}")
     # print(f"new_ys: {new_ys}")
     # print(f"original_output: {original_output}")
     return new_ys
@@ -131,7 +131,7 @@ def get_split_prompt(task, nodes, x, step):
     """get split prompt
     """
     # ys = [node.y for node in nodes]
-    delimiter = task.DELIMITER
+    delimiter = DELIMITER
     input_prompts = []
     node_has_sons = []
     node_completed = []
@@ -264,21 +264,21 @@ def bsf_solve(args, task, qid, model, to_print=True):
     all_nodes = [node_x]
     for step in range(task.steps):
         # TODO: add nodes meta information
-        print(f"node numbers: {len(nodes)}")
+        # print(f"node numbers: {len(nodes)}")
         node_idxs = [node.idx for node in nodes]
-        print(f"node idxs: {str(node_idxs)}")
+        # print(f"node idxs: {str(node_idxs)}")
         input_prompts, previous_step, node_has_son, node_completed = get_split_prompt(task, nodes, x, step)
         cnt += len(node_completed)
         node_has_son_y = [node.y for node in node_has_son]
         node_has_son_idx = [node.idx for node in node_has_son]
         node_completed_y = [node.y for node in node_completed]
         node_completed_idx = [node.idx for node in node_completed]
-        print(f"node_has_son_idx: {str(node_has_son_idx)}")
-        print(f"node_has_son_y: {node_has_son_y}")
-        print(f"node_completed_idx: {str(node_completed_idx)}")
-        print(f"node_completed_y: {node_completed_y}")
-        print(f"node_has_son: {len(node_has_son)}")
-        print(f"node_completed: {len(node_completed)}")
+        # print(f"node_has_son_idx: {str(node_has_son_idx)}")
+        # print(f"node_has_son_y: {node_has_son_y}")
+        # print(f"node_completed_idx: {str(node_completed_idx)}")
+        # print(f"node_completed_y: {node_completed_y}")
+        # print(f"node_has_son: {len(node_has_son)}")
+        # print(f"node_completed: {len(node_completed)}")
         # get sample y
         # NOTE y need to append to the input x
         new_ys = get_samples(task, model, input_prompts, previous_step, args.n_generate_sample)
@@ -292,7 +292,8 @@ def bsf_solve(args, task, qid, model, to_print=True):
             break
         if (len(ys) >= args.max_samples):
             break
-    
+
+    all_nodes_dict = {node.idx: node for node in all_nodes}
     import time
     start_time = time.time()  
     process_tree(all_nodes)
@@ -301,16 +302,11 @@ def bsf_solve(args, task, qid, model, to_print=True):
     # 计算运行时间  
 
 
-    leaf_nodes = collect_stats_from_root(all_nodes)  
+    leaf_nodes = collect_stats_from_root(all_nodes_dict)  
   
-    # 将 leaf_nodes 写入 result.jsonl 文件中  
-    with open('data/result.jsonl', 'w') as f:  
-        for leaf in leaf_nodes:  
-            f.write(json.dumps(leaf) + '\n')
-
     end_time = time.time()  
     execution_time = end_time - start_time  
     print(f"process_tree 函数的运行时间: {execution_time} 秒") 
 
     infos = [node.get_info() for node in all_nodes]
-    return ys, {'tree_path': infos}
+    return leaf_nodes, {qid: infos}

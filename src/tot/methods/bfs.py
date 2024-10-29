@@ -128,7 +128,7 @@ def bsf_solve(args, task, qid, to_print=True):
     idx = 0 
 
     x = task.get_input(qid)  # input
-    ys = [x]  # current output candidates
+    ys = [task.cot_prompt_wrap(x)]  # current output candidates
     infos = []
     node_x = Node(qid=qid, idx=idx, x=x, y="", step=0, parent=-1)
     nodes = [node_x]

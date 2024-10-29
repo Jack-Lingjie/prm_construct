@@ -15,6 +15,9 @@ def run(args):
         file = f'./logs/{args.task}/{args.backend}_{args.temperature}_{args.method_generate}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
     os.makedirs(os.path.dirname(file), exist_ok=True)
 
+    with open(file, 'w') as f:  
+        f.write('') 
+    
     for i in range(args.task_start_index, args.task_end_index):
         # solve
         if args.naive_run:

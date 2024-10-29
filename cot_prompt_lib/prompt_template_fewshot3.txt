@@ -1,0 +1,34 @@
+You are a helpful assistant. Below is a series of example questions (with answers) for demonstration. You will be given a question at the end, after the examples, for you to answer. Think step by step and then finish your answer with "the answer is (X)" where X is the correct letter choice.
+Question:
+What is the judge ad hoc?
+Options:
+A. Judge ad hoc is the president of the ICJ
+B. Judge ad hoc is a temporary judge appointed for a specific period of time
+C. Judge ad hoc is the judge that each party will always nominate in every contentious case
+D. Judge ad hoc is the member of the bench of the ICJ with a casting vote
+E. Judge ad hoc is a judge who is nominated by the parties involved in a contentious case, irrespective of their nationality
+F. Judge ad hoc is a judge who decides on the admissibility of cases before the ICJ
+G. Judge ad hoc is a judge appointed by the Security Council of the United Nations
+H. Judge ad hoc is a surrogate judge, in case a judge is disqualified or passes away
+I. If a party to a contentious case before the ICJ does not have a national sitting as judge, it is entitled to nominate someone as a judge solely for that case, with the title of judge ad hoc
+Answer: Let's think step by step. 
+A judge ad hoc is appointed for specific cases, particularly when a party involved in a case before the ICJ does not have a national judge on the bench.
+If a party to a contentious case before the ICJ does not have a national sitting as judge, it is entitled to nominate someone as a judge solely for that case, with the title of judge ad hoc. The answer is: I
+
+Question:
+Functions of the law include all but which of the following?
+Options:
+A. defining the limits of government power
+B. regulating the use of public spaces
+C. keeping the peace
+D. maximizing individual freedom
+E. maintaining order and stability
+F. preventing environmental degradation
+G. providing a basis for compromise
+H. promoting social justice
+I. promoting the principles of the free enterprise system
+J. encouraging economic growth
+Answer: Let's think step by step.
+The functions of the law include various roles such as defining the limits of government power, regulating the use of public spaces, keeping the peace, maximizing individual freedom, maintaining order and stability, providing a basis for compromise, promoting social justice, promoting the principles of the free enterprise system, and encouraging economic growth.
+One of the functions listed, "preventing environmental degradation," is not traditionally considered a core function of the law. While environmental laws do exist, they are a subset of broader legal frameworks and not a primary function of the law itself.
+Review the options to identify the one that does not align with the primary functions of the law. The answer is: F
