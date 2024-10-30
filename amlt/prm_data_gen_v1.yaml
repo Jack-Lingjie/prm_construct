@@ -88,7 +88,7 @@ search:
     - sudo apt-get install dos2unix
     - dos2unix scripts/{rank}
     - bash scripts/{rank}
-    - sleep infinity
+    # - sleep infinity
     # - torchrun --nproc_per_node=8 src/train.py bash_script/{rank}
     priority: High
     submit_args:
