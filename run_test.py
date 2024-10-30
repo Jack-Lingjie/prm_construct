@@ -7,7 +7,7 @@ from my_task import get_task
 from methods.bfs import bsf_solve
 # from tot.models import gpt_usage
 from models.mymodel import Generator
-
+from tqdm import tqdm 
 # SAVE_PATH = '/mnt/lingjiejiang/textual_aesthetics/prm/data'
 def run(args):
     task = get_task(args.task)
@@ -31,7 +31,7 @@ def run(args):
         f.write('')
 
     total_tasks = args.task_end_index - args.task_start_index
-    for i in range(args.task_start_index, args.task_end_index):
+    for i in tqdm(range(args.task_start_index, args.task_end_index), desc=f"Processing {args.task_start_index} to {args.task_end_index}"): 
 
         leaf_nodes, info = bsf_solve(args, task, i, model)
 

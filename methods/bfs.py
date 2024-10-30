@@ -286,6 +286,8 @@ def bsf_solve(args, task, qid, model, to_print=True):
         # print(f"node_completed: {len(node_completed)}")
         # get sample y
         # NOTE y need to append to the input x
+        if len(input_prompts) == 0:
+            break
         new_ys = get_samples(task, model, input_prompts, previous_step, args.n_generate_sample)
         # get new results
         new_nodes, select_new_ys, idx = get_filter_results(nodes, node_has_son, node_completed, new_ys, args.max_samples, args.n_generate_sample, step + 1, idx, gt_answer)
