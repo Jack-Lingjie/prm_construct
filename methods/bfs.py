@@ -91,14 +91,20 @@ class Node:
             return True
         return False
 
-def get_samples(task, model, input_prompts, previous_step, n_generate_sample):
+def get_samples(qid, model, input_prompts, previous_step, n_generate_sample):
     # print(f"input_prompts length: {len(input_prompts)}")
     input_prompts = [x for x in input_prompts for _ in range(n_generate_sample)]
     previous_step_copy = [x for x in previous_step for _ in range(n_generate_sample)]
     # print(f"input_prompts_copy length: {len(input_prompts)}")
     # print(f"input_prompts: {input_prompts}")
-
-    samples, original_output = model.get_next_response(input_prompts) # get results
+    
+    try:  
+        samples, original_output = model.get_next_response(input_prompts)  # get results  
+    except Exception as e:  
+        print("IndexError encountered in get_next_response.")  
+        print(f"Exception message: {str(e)}")  
+        print(f"input_prompts: {input_prompts}")
+        print(f"Error qustion id: {qid}")
     # print(f"sample: {samples}")
     new_ys = []
     for y_pre, y_new in zip(previous_step_copy, samples):
@@ -288,7 +294,7 @@ def bsf_solve(args, task, qid, model, to_print=True):
         # NOTE y need to append to the input x
         if len(input_prompts) == 0:
             break
-        new_ys = get_samples(task, model, input_prompts, previous_step, args.n_generate_sample)
+        new_ys = get_samples(question_id, model, input_prompts, previous_step, args.n_generate_sample)
         # get new results
         new_nodes, select_new_ys, idx = get_filter_results(nodes, node_has_son, node_completed, new_ys, args.max_samples, args.n_generate_sample, step + 1, idx, gt_answer)
         
