@@ -87,6 +87,7 @@ search:
     - ls /mnt/lingjiejiang
     - sudo apt-get install dos2unix
     - dos2unix scripts/{rank}
+    - bash scripts/{rank}
     - sleep infinity
     # - torchrun --nproc_per_node=8 src/train.py bash_script/{rank}
     priority: High
