@@ -14,12 +14,12 @@ def run(args):
     model = Generator(args.model_name, temperature=args.temperature, max_tokens=args.max_tokens)
     logs, cnt_avg, cnt_any = [], 0, 0
     if args.naive_run:
-        file = f'{args.save_path}/data/{args.task}_tree_path/{args.model_name}_{args.temperature}_naive_{args.prompt_sample}_sample_{args.n_generate_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+        file = f'{args.save_path}/data_{args.steps}/{args.task}_tree_path/{args.model_name}_{args.temperature}_naive_{args.prompt_sample}_sample_{args.n_generate_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
     else:
-        file = f'{args.save_path}/data/{args.task}_tree_path/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+        file = f'{args.save_path}/data_{args.steps}/{args.task}_tree_path/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
     
 
-    path_file = f'{args.save_path}/data/{args.task}_results/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
+    path_file = f'{args.save_path}/data_{args.steps}/{args.task}_results/{args.model_name}_{args.temperature}_{args.model_name}{args.n_generate_sample}_{args.method_evaluate}{args.n_evaluate_sample}_{args.method_select}{args.n_select_sample}_start{args.task_start_index}_end{args.task_end_index}.json'
     
     os.makedirs(os.path.dirname(file), exist_ok=True)
     os.makedirs(os.path.dirname(path_file), exist_ok=True)
@@ -39,9 +39,13 @@ def run(args):
         current_task = i - args.task_start_index + 1  
         print(f"Processing task {current_task}/{total_tasks} (index {i})")  
 
-        with open(file, 'a') as f:
-            json.dump(info, f, indent=4)
-        
+        # with open(file, 'a') as f:
+        #     json.dump(info, f, indent=4)
+
+
+        with open(file, 'a') as f:  
+            f.write(json.dumps(info, indent=4) + '\n') 
+
         with open(path_file, 'a') as f:  
             for leaf in leaf_nodes:  
                 f.write(json.dumps(leaf) + '\n')
@@ -62,6 +66,7 @@ def parse_args():
     args.add_argument('--task', type=str, choices=["prm"], default="prm")
     args.add_argument('--task_start_index', type=int, default=900)
     args.add_argument('--task_end_index', type=int, default=901)
+    args.add_argument('--steps', type=int, default=3)
 
     args.add_argument('--naive_run', action='store_true')
     args.add_argument('--prompt_sample', type=str, choices=['standard', 'cot'])  # only used when method_generate = sample, or naive_run
